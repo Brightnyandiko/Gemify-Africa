@@ -1,4 +1,4 @@
-name: gemify
+name: Gemify
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -63,13 +63,13 @@ flutter:
   fonts:
     - family: Inter
       fonts:
-        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter_28pt-Regular.ttf
           weight: 400
-        - asset: assets/fonts/Inter-Medium.ttf
+        - asset: assets/fonts/Inter_28pt-Medium.ttf
           weight: 500
-        - asset: assets/fonts/Inter-SemiBold.ttf
+        - asset: assets/fonts/Inter_28pt-SemiBold.ttf
           weight: 600
-        - asset: assets/fonts/Inter-Bold.ttf
+        - asset: assets/fonts/Inter_28pt-Bold.ttf
           weight: 700
 
   # To add assets to your application, add an assets section, like this:
@@ -104,6 +104,6 @@ flutter:
   # see https://flutter.dev/custom-fonts/#from-packages
 
   assets:
-    - assets/images/onboarding_1.png
-    - assets/images/onboarding_2.png
-    - assets/images/onboarding_3.png
+    - assets/images/onboarding1.png
+    - assets/images/onboarding2.png
+    - assets/images/onboarding3.png
