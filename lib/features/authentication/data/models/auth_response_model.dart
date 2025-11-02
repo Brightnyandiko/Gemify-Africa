@@ -16,30 +16,31 @@ import 'user_model.dart';
 ///   },
 ///   "message": "OTP verified successfully"
 /// }
+/// Auth Response Model - CORRECTED VERSION
 class AuthResponseModel extends AuthResponse {
 
+  // Override the user property to use UserModel specifically
+  @override
+  final UserModel user;
+
   const AuthResponseModel({
-    required super.user,
+    required this.user,              // Now explicitly UserModel
     required super.accessToken,
     super.refreshToken,
     super.message,
-  });
+  }) : super(user: user);            // Pass to parent constructor
 
-  /// Create from JSON - Parses the Flask API response
+  /// Create from JSON
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
     return AuthResponseModel(
-      // Parse the nested user object
+      // This creates a UserModel
       user: UserModel.fromJson(json['user'] as Map<String, dynamic>),
 
-      // Get the JWT token
       accessToken: json['access_token'] as String? ??
-          json['token'] as String? ?? // Alternative field name
+          json['token'] as String? ??
           '',
 
-      // Optional refresh token (your API might not provide this)
       refreshToken: json['refresh_token'] as String?,
-
-      // Success message from server
       message: json['message'] as String?,
     );
   }
@@ -47,7 +48,7 @@ class AuthResponseModel extends AuthResponse {
   /// Convert to JSON
   Map<String, dynamic> toJson() {
     return {
-      'user': (user as UserModel).toJson(),
+      'user': user.toJson(),  // user is UserModel, so this works
       'access_token': accessToken,
       'refresh_token': refreshToken,
       'message': message,
@@ -57,7 +58,10 @@ class AuthResponseModel extends AuthResponse {
   /// Convert from entity to model
   factory AuthResponseModel.fromEntity(AuthResponse authResponse) {
     return AuthResponseModel(
-      user: authResponse.user,
+      // Convert User entity to UserModel
+      user: authResponse.user is UserModel
+          ? authResponse.user as UserModel
+          : UserModel.fromEntity(authResponse.user),
       accessToken: authResponse.accessToken,
       refreshToken: authResponse.refreshToken,
       message: authResponse.message,
@@ -68,7 +72,7 @@ class AuthResponseModel extends AuthResponse {
   @override
   AuthResponse toEntity() {
     return AuthResponse(
-      user: user,
+      user: user.toEntity(),  // Convert UserModel to User entity
       accessToken: accessToken,
       refreshToken: refreshToken,
       message: message,
