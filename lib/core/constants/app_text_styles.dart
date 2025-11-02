@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 
+import 'app_colors.dart';
+
 class AppTextStyles {
   // Font family
   static const String fontFamily = 'Inter';
@@ -102,4 +104,21 @@ class AppTextStyles {
     fontWeight: FontWeight.w400,
     height: 1.6,
   );
+
+  // Labels
+  static const label = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 14.0,
+    fontWeight: FontWeight.w500,
+    height: 1.4,
+    color: AppColors.gray700,
+  );
+
+  // static const caption = TextStyle(
+  //   fontFamily: fontFamily,
+  //   fontSize: 12.0,
+  //   fontWeight: FontWeight.w400,
+  //   height: 1.4,
+  //   color: AppColors.gray500,
+  // );
 }
