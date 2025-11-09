@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'features/authentication/presentation/pages/register_page.dart';
 import 'features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'features/onboarding/presentation/pages/onboarding_screen.dart';
 import 'core/constants/app_colors.dart';
@@ -32,7 +33,7 @@ class MyApp extends StatelessWidget {
           '/onboarding': (context) => const OnboardingScreen(),
           // Add other routes as needed
           // '/login': (context) => const LoginScreen(),
-          // '/register': (context) => const RegisterScreen(),
+          '/register': (context) => const RegisterPage(),
         },
       ),
     );
