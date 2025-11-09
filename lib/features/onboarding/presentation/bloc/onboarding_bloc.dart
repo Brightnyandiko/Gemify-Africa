@@ -7,7 +7,7 @@ import 'onboarding_state.dart';
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   static const int totalPages = 3;
 
-  OnboardingBloc() : super(const OnboardingState()) {
+  OnboardingBloc({required Object sharedPreferences, required int totalPages}) : super(const OnboardingState()) {
     on<OnboardingPageChanged>(_onPageChanged);
     on<OnboardingCompleted>(_onCompleted);
     on<OnboardingSkipped>(_onSkipped);

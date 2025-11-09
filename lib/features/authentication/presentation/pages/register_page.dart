@@ -14,7 +14,7 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
-import 'otp_verification.dart';
+import 'otp_verification_page.dart';
 
 /// Registration Screen - Sign Up
 ///

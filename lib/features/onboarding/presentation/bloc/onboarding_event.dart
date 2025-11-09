@@ -18,6 +18,7 @@ class OnboardingPageChanged extends OnboardingEvent {
   List<Object?> get props => [pageIndex];
 }
 
+
 class OnboardingCompleted extends OnboardingEvent {
   const OnboardingCompleted();
 }
