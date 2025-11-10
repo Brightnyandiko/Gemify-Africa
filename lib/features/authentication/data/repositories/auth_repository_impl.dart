@@ -50,6 +50,73 @@ class AuthRepositoryImpl implements AuthRepository {
   /// Returns: Either<Failure, User>
   /// - Left side = Error occurred (Failure)
   /// - Right side = Success! (User)
+  // @override
+  // Future<Either<Failure, User>> registerUser({
+  //   required String username,
+  //   required String email,
+  //   required String phone,
+  // }) async {
+  //
+  //   // STEP 1: Check internet connection
+  //   // Like checking if your phone has signal before making a call
+  //   final isConnected = await networkInfo.isConnected;
+  //
+  //   if (!isConnected) {
+  //     // No internet! Return a NetworkFailure
+  //     // The "Left" means error path
+  //     print('❌ No internet connection');
+  //     return const Left(NetworkFailure('No internet connection'));
+  //   }
+  //
+  //   // STEP 2: We have internet, let's try to register
+  //   try {
+  //     print('🚀 Starting user registration...');
+  //
+  //     // Create the request object with user's data
+  //     final request = RegisterRequestModel(
+  //       username: username,
+  //       email: email,
+  //       phone: phone,
+  //     );
+  //
+  //     // Call the remote data source (which calls Flask API)
+  //     // This is like clicking "Submit" on a registration form
+  //     final userModel = await remoteDataSource.registerUser(request);
+  //
+  //     print('✅ User registered successfully: ${userModel.username}');
+  //
+  //     // STEP 3: Save user locally so app can work offline
+  //     // Like saving a contact on your phone after getting their number
+  //     await localDataSource.cacheUser(userModel);
+  //
+  //     print('💾 User cached locally');
+  //
+  //     // STEP 4: Return success!
+  //     // Convert UserModel (data layer) to User (domain layer)
+  //     // The "Right" means success path
+  //     return Right(userModel.toEntity());
+  //
+  //   } on ServerException catch (e) {
+  //     // The Flask API returned an error
+  //     // Maybe username is taken, or email is invalid
+  //     print('❌ Server error: ${e.message}');
+  //     return Left(ServerFailure(e.message, statusCode: e.statusCode));
+  //
+  //   } on NetworkException catch (e) {
+  //     // Lost internet during the request
+  //     print('❌ Network error: ${e.message}');
+  //     return Left(NetworkFailure(e.message));
+  //
+  //   } catch (e) {
+  //     // Something unexpected happened
+  //     // Like your phone crashing or running out of memory
+  //     print('❌ Unexpected error: $e');
+  //     return Left(ServerFailure('Unexpected error during registration'));
+  //   }
+  // }
+
+  // lib/features/authentication/data/repositories/auth_repository_impl.dart
+
   @override
   Future<Either<Failure, User>> registerUser({
     required String username,
@@ -57,60 +124,35 @@ class AuthRepositoryImpl implements AuthRepository {
     required String phone,
   }) async {
 
-    // STEP 1: Check internet connection
-    // Like checking if your phone has signal before making a call
-    final isConnected = await networkInfo.isConnected;
+    // Use thorough internet check for critical operations
+    print('🔍 Verifying internet access for registration...');
+    final hasInternet = await networkInfo.hasInternetAccess;
 
-    if (!isConnected) {
-      // No internet! Return a NetworkFailure
-      // The "Left" means error path
-      print('❌ No internet connection');
-      return const Left(NetworkFailure('No internet connection'));
+    if (!hasInternet) {
+      print('❌ No internet access');
+      return const Left(NetworkFailure('No internet connection. Please check your connection and try again.'));
     }
 
-    // STEP 2: We have internet, let's try to register
-    try {
-      print('🚀 Starting user registration...');
+    print('✅ Internet access confirmed, proceeding with registration...');
 
-      // Create the request object with user's data
+    try {
       final request = RegisterRequestModel(
         username: username,
         email: email,
         phone: phone,
       );
 
-      // Call the remote data source (which calls Flask API)
-      // This is like clicking "Submit" on a registration form
       final userModel = await remoteDataSource.registerUser(request);
 
-      print('✅ User registered successfully: ${userModel.username}');
-
-      // STEP 3: Save user locally so app can work offline
-      // Like saving a contact on your phone after getting their number
       await localDataSource.cacheUser(userModel);
 
-      print('💾 User cached locally');
-
-      // STEP 4: Return success!
-      // Convert UserModel (data layer) to User (domain layer)
-      // The "Right" means success path
       return Right(userModel.toEntity());
 
     } on ServerException catch (e) {
-      // The Flask API returned an error
-      // Maybe username is taken, or email is invalid
-      print('❌ Server error: ${e.message}');
       return Left(ServerFailure(e.message, statusCode: e.statusCode));
-
     } on NetworkException catch (e) {
-      // Lost internet during the request
-      print('❌ Network error: ${e.message}');
       return Left(NetworkFailure(e.message));
-
     } catch (e) {
-      // Something unexpected happened
-      // Like your phone crashing or running out of memory
-      print('❌ Unexpected error: $e');
       return Left(ServerFailure('Unexpected error during registration'));
     }
   }

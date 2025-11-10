@@ -1,30 +1,37 @@
 // lib/features/onboarding/presentation/bloc/onboarding_state.dart
-
 import 'package:equatable/equatable.dart';
 
-class OnboardingState extends Equatable {
-  final int currentPage;
-  final bool isLastPage;
-  final bool isCompleted;
-
-  const OnboardingState({
-    this.currentPage = 0,
-    this.isLastPage = false,
-    this.isCompleted = false,
-  });
-
-  OnboardingState copyWith({
-    int? currentPage,
-    bool? isLastPage,
-    bool? isCompleted,
-  }) {
-    return OnboardingState(
-      currentPage: currentPage ?? this.currentPage,
-      isLastPage: isLastPage ?? this.isLastPage,
-      isCompleted: isCompleted ?? this.isCompleted,
-    );
-  }
+abstract class OnboardingState extends Equatable {
+  const OnboardingState();
 
   @override
-  List<Object?> get props => [currentPage, isLastPage, isCompleted];
+  List<Object> get props => [];
+}
+
+class OnboardingInitial extends OnboardingState {
+  final int currentPage;
+
+  const OnboardingInitial({this.currentPage = 0});
+
+  @override
+  List<Object> get props => [currentPage];
+}
+
+class OnboardingInProgress extends OnboardingState {
+  final int currentPage;
+  final int totalPages;
+
+  const OnboardingInProgress({
+    required this.currentPage,
+    required this.totalPages,
+  });
+
+  bool get isLastPage => currentPage == totalPages - 1;
+
+  @override
+  List<Object> get props => [currentPage, totalPages];
+}
+
+class OnboardingFinished extends OnboardingState {
+  const OnboardingFinished();
 }

@@ -1,13 +1,17 @@
 // lib/features/onboarding/presentation/bloc/onboarding_bloc.dart
-
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'onboarding_event.dart';
 import 'onboarding_state.dart';
 
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
-  static const int totalPages = 3;
+  final int totalPages;
+  final SharedPreferences sharedPreferences;
 
-  OnboardingBloc({required Object sharedPreferences, required int totalPages}) : super(const OnboardingState()) {
+  OnboardingBloc({
+    required this.totalPages,
+    required this.sharedPreferences,
+  }) : super(OnboardingInProgress(currentPage: 0, totalPages: totalPages)) {
     on<OnboardingPageChanged>(_onPageChanged);
     on<OnboardingCompleted>(_onCompleted);
     on<OnboardingSkipped>(_onSkipped);
@@ -17,23 +21,25 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       OnboardingPageChanged event,
       Emitter<OnboardingState> emit,
       ) {
-    emit(state.copyWith(
+    emit(OnboardingInProgress(
       currentPage: event.pageIndex,
-      isLastPage: event.pageIndex == totalPages - 1,
+      totalPages: totalPages,
     ));
   }
 
-  void _onCompleted(
+  Future<void> _onCompleted(
       OnboardingCompleted event,
       Emitter<OnboardingState> emit,
-      ) {
-    emit(state.copyWith(isCompleted: true));
+      ) async {
+    await sharedPreferences.setBool('onboarding_completed', true);
+    emit(const OnboardingFinished());
   }
 
-  void _onSkipped(
+  Future<void> _onSkipped(
       OnboardingSkipped event,
       Emitter<OnboardingState> emit,
-      ) {
-    emit(state.copyWith(isCompleted: true));
+      ) async {
+    await sharedPreferences.setBool('onboarding_completed', true);
+    emit(const OnboardingFinished());
   }
 }

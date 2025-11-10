@@ -1,15 +1,17 @@
 // lib/features/onboarding/presentation/pages/onboarding_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_text_styles.dart';
+import '../../../../shared/widgets/custom_button.dart';
+// import '../../data/datasources/onboarding_data.dart';
+import '../../data/datasources/onboarding_data.dart';
+import '../../data/models/onboarding_page_model.dart';
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_event.dart';
 import '../bloc/onboarding_state.dart';
-import '../../data/models/onboarding_page_model.dart';
 import '../widgets/onboarding_page_widget.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../shared/widgets/custom_button.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -20,24 +22,7 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
-
-  final List<OnboardingPageModel> _pages = const [
-    OnboardingPageModel(
-      image: 'assets/images/onboarding1.png',
-      title: 'Discover Your Dream\nHotel, Effortlessly',
-      description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
-    ),
-    OnboardingPageModel(
-      image: 'assets/images/onboarding2.png',
-      title: 'Book with Ease, Stay\nwith Style',
-      description: 'Semper in cursus magna et eu varius nunc adipiscing. Elementum justo, laoreet id sem.',
-    ),
-    OnboardingPageModel(
-      image: 'assets/images/onboarding3.png',
-      title: 'Luxury and Comfort,\nJust a Tap Away',
-      description: 'Semper in cursus magna et eu varius nunc adipiscing. Elementum justo, laoreet id sem.',
-    ),
-  ];
+  final List<OnboardingPageModel> _pages = OnboardingData.getPages();
 
   @override
   void dispose() {
@@ -45,90 +30,85 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  void _onPageChanged(int index) {
-    context.read<OnboardingBloc>().add(OnboardingPageChanged(index));
-  }
-
-  void _onContinue() {
-    final currentPage = context.read<OnboardingBloc>().state.currentPage;
-
-    if (currentPage < _pages.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      _completeOnboarding();
-    }
-  }
-
-  void _completeOnboarding() {
-    context.read<OnboardingBloc>().add(const OnboardingCompleted());
-    // Navigate to login/home screen
+  void _navigateToAuth() {
+    // Navigate to authentication screens
+    // For now, just print
     Navigator.pushReplacementNamed(context, '/login');
-  }
-
-  void _navigateToRegister() {
-    Navigator.pushNamed(context, '/register');
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: BlocListener<OnboardingBloc, OnboardingState>(
-        listener: (context, state) {
-          if (state.isCompleted) {
-            // Navigation is handled in _completeOnboarding
-          }
-        },
-        child: Stack(
-          children: [
-            // PageView with onboarding screens
-            PageView.builder(
-              controller: _pageController,
-              onPageChanged: _onPageChanged,
-              itemCount: _pages.length,
-              itemBuilder: (context, index) {
-                return OnboardingPageWidget(
-                  page: _pages[index],
-                  isFirstPage: index == 0,
-                );
-              },
-            ),
+    return BlocListener<OnboardingBloc, OnboardingState>(
+      listener: (context, state) {
+        if (state is OnboardingFinished) {
+          _navigateToAuth();
+        }
+      },
+      child: Scaffold(
+        body: BlocBuilder<OnboardingBloc, OnboardingState>(
+          builder: (context, state) {
+            if (state is! OnboardingInProgress) {
+              return const SizedBox.shrink();
+            }
 
-            // Bottom content (buttons and indicators)
-            Positioned(
-              left: 24,
-              right: 24,
-              bottom: 60,
-              child: BlocBuilder<OnboardingBloc, OnboardingState>(
-                builder: (context, state) {
-                  return Column(
+            return Stack(
+              children: [
+                // PageView
+                PageView.builder(
+                  controller: _pageController,
+                  itemCount: _pages.length,
+                  onPageChanged: (index) {
+                    context.read<OnboardingBloc>().add(
+                      OnboardingPageChanged(index),
+                    );
+                  },
+                  itemBuilder: (context, index) {
+                    return OnboardingPageWidget(page: _pages[index]);
+                  },
+                ),
+
+                // Bottom Content (Button, Indicator, Skip)
+                Positioned(
+                  left: 24,
+                  right: 24,
+                  bottom: 60,
+                  child: Column(
                     children: [
-                      // Page indicators
+                      // Page Indicator
                       SmoothPageIndicator(
                         controller: _pageController,
                         count: _pages.length,
                         effect: ExpandingDotsEffect(
                           activeDotColor: AppColors.primary600,
-                          dotColor: Colors.white.withOpacity(0.5),
+                          dotColor: Colors.white.withOpacity(0.3),
                           dotHeight: 8,
                           dotWidth: 8,
                           expansionFactor: 3,
-                          spacing: 8,
+                          spacing: 6,
                         ),
                       ),
 
                       const SizedBox(height: 32),
 
-                      // Continue/Get Started button
+                      // Button
                       CustomButton(
-                        text: state.currentPage == 2 ? 'Get Started' : 'Continue',
-                        onPressed: _onContinue,
-                        backgroundColor: AppColors.primary600,
+                        text: state.isLastPage ? 'Continue' :
+                        state.currentPage == 0 ? 'Get Started' : 'Continue',
+                        onPressed: () {
+                          if (state.isLastPage) {
+                            context.read<OnboardingBloc>().add(
+                              const OnboardingCompleted(),
+                            );
+                          } else {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        },
                       ),
 
-                      // Register link (only on first page)
+                      // Register Link (only on last page)
                       if (state.currentPage == 2) ...[
                         const SizedBox(height: 16),
                         Row(
@@ -136,18 +116,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           children: [
                             Text(
                               "Don't have an account? ",
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
+                              style: AppTextStyles.bodyMedium.copyWith(
                                 fontSize: 14,
+                                color: AppColors.gray0
                               ),
                             ),
                             GestureDetector(
-                              onTap: _navigateToRegister,
-                              child: const Text(
+                              onTap: () {
+                                context.read<OnboardingBloc>().add(
+                                  const OnboardingSkipped(),
+                                );
+                              },
+                              child: Text(
                                 'Register',
-                                style: TextStyle(
-                                  color: AppColors.primary400,
+                                style: AppTextStyles.bodyMedium.copyWith(
                                   fontSize: 14,
+                                  color: AppColors.primary600,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -156,11 +140,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       ],
                     ],
-                  );
-                },
-              ),
-            ),
-          ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
