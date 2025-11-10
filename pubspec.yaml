@@ -39,7 +39,7 @@ dependencies:
 
   # Network
   dio: ^5.4.0
-  connectivity_plus: ^5.0.2
+  connectivity_plus: ^6.0.4
 
   # Storage
   flutter_secure_storage: ^9.0.0

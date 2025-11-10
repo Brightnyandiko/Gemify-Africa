@@ -19,23 +19,15 @@
 
 // lib/core/network/network_info.dart
 
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-/// Network Information Interface
 abstract class NetworkInfo {
-  /// Quick connectivity check using device network interfaces
   Future<bool> get isConnected;
-
-  /// Thorough check with actual internet access verification
   Future<bool> get hasInternetAccess;
-
-  /// Stream of connectivity changes
-  Stream<bool> get connectivityStream;
 }
 
-/// Network Information Implementation
 class NetworkInfoImpl implements NetworkInfo {
   final Connectivity connectivity;
 
@@ -44,96 +36,70 @@ class NetworkInfoImpl implements NetworkInfo {
   @override
   Future<bool> get isConnected async {
     try {
-      print('🔍 [NetworkInfo] Checking connectivity...');
+      print('🔍 Checking network connectivity...');
 
-      // Get connectivity results (returns List in modern versions)
-      final List<ConnectivityResult> results =
-      (await connectivity.checkConnectivity()) as List<ConnectivityResult>;
+      // This returns List<ConnectivityResult> in modern versions
+      final List<ConnectivityResult> connectivityResults =
+      await connectivity.checkConnectivity();
 
-      print('📡 [NetworkInfo] Results: $results');
+      print('📡 Connectivity results: $connectivityResults');
 
-      // Device has connection if:
-      // 1. Results list is not empty, AND
-      // 2. Not ALL results are 'none'
-      final hasConnection = results.isNotEmpty &&
-          !results.every((r) => r == ConnectivityResult.none);
+      // Check if there's at least one active connection
+      // (not empty and not all 'none')
+      final hasConnection = connectivityResults.isNotEmpty &&
+          !connectivityResults.every((result) => result == ConnectivityResult.none);
 
       if (hasConnection) {
-        print('✅ [NetworkInfo] Device connected via: $results');
+        print('✅ Connected via: $connectivityResults');
       } else {
-        print('❌ [NetworkInfo] No active network interfaces');
+        print('❌ No active connections');
       }
 
       return hasConnection;
 
     } catch (e, stackTrace) {
-      print('❌ [NetworkInfo] Error checking connectivity: $e');
+      print('❌ Error checking connectivity: $e');
       print('Stack trace: $stackTrace');
-
-      // Fail open - let API call determine actual connectivity
-      return true;
+      return true; // Fail open
     }
   }
 
   @override
   Future<bool> get hasInternetAccess async {
     try {
-      // Step 1: Check device connectivity
+      // First check device connectivity
       final deviceConnected = await isConnected;
 
       if (!deviceConnected) {
-        print('📱 [NetworkInfo] Device has no network interfaces');
+        print('📱 No network interfaces available');
         return false;
       }
 
-      print('🌐 [NetworkInfo] Verifying actual internet access...');
+      print('🌐 Verifying actual internet access...');
 
-      // Step 2: Verify with DNS lookup
+      // Try to reach a reliable server
       final result = await InternetAddress.lookup('google.com')
-          .timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          print('⏱️ [NetworkInfo] DNS lookup timed out');
-          return <InternetAddress>[];
-        },
-      );
+          .timeout(const Duration(seconds: 5));
 
-      // Step 3: Check results
-      final hasInternet = result.isNotEmpty &&
-          result[0].rawAddress.isNotEmpty;
+      final hasInternet = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
 
       if (hasInternet) {
-        print('✅ [NetworkInfo] Internet access confirmed');
+        print('✅ Internet access verified');
       } else {
-        print('❌ [NetworkInfo] DNS lookup failed - no internet');
+        print('❌ No internet access');
       }
 
       return hasInternet;
 
     } on SocketException catch (e) {
-      print('❌ [NetworkInfo] Socket exception: ${e.message}');
+      print('❌ Socket exception: $e');
       return false;
-
     } on TimeoutException catch (e) {
-      print('❌ [NetworkInfo] Timeout: ${e.message}');
+      print('❌ Timeout: $e');
       return false;
-
     } catch (e) {
-      print('❌ [NetworkInfo] Unexpected error: $e');
+      print('❌ Unknown error: $e');
       return true; // Fail open
     }
-  }
-
-  @override
-  Stream<bool> get connectivityStream {
-    // Stream that emits true/false when connectivity changes
-    return connectivity.onConnectivityChanged.map((results) {
-      final hasConnection = results.isNotEmpty &&
-          !results.every((r) => r == ConnectivityResult.none);
-
-      print('📡 [NetworkInfo] Connectivity changed: $hasConnection ($results)');
-
-      return hasConnection;
-    });
   }
 }
