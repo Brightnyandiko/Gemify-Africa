@@ -3,6 +3,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/network/network_info.dart';
 import '../entities/user.dart';
 import '../repositories/auth_repository.dart';
 
@@ -11,21 +12,31 @@ import '../repositories/auth_repository.dart';
 /// This represents the business action of creating a new account.
 /// It validates the input and delegates to the repository.
 class RegisterUser {
-  final AuthRepository repository;  // Dependency on the repository interface
+  final AuthRepository repository;
+  final NetworkInfo networkInfo; // ✅ Optional: Check at use case level too
 
-  /// Constructor - We inject the repository
-  /// This is "Dependency Injection" - the use case receives what it needs
-  /// rather than creating it itself
-  RegisterUser(this.repository);
+  RegisterUser({
+    required this.repository,
+    required this.networkInfo,
+  });
 
-  /// Call method - Makes the class callable like a function
-  /// Usage: registerUser(params) instead of registerUser.execute(params)
-  ///
-  /// This is a common pattern in Clean Architecture
   Future<Either<Failure, User>> call(RegisterUserParams params) async {
-    // Input validation could go here
-    // For now, we delegate directly to the repository
+    // Optional: Quick connectivity check before even calling repository
+    // This provides faster feedback to user
+    print('🔍 [UseCase] Quick connectivity pre-check...');
 
+    final hasConnection = await networkInfo.isConnected;
+
+    if (!hasConnection) {
+      print('❌ [UseCase] No network connection - failing fast');
+      return const Left(NetworkFailure(
+        'No internet connection',
+      ));
+    }
+
+    print('✅ [UseCase] Connectivity confirmed, proceeding...');
+
+    // Delegate to repository for actual work
     return await repository.registerUser(
       username: params.username,
       email: params.email,

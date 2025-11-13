@@ -17,6 +17,7 @@ import '../../features/authentication/domain/usecases/verify_otp.dart';
 import '../../features/authentication/presentation/bloc/auth_bloc.dart';
 import '../network/dio_client.dart';
 import '../network/network_info.dart';
+import '../network/network_info_impl.dart';
 import '../storage/token_storage.dart';
 import '../storage/user_storage.dart';
 
@@ -46,18 +47,28 @@ Future<void> initializeDependencies() async {
   print('🔐 Registering FlutterSecureStorage...');
   sl.registerLazySingleton(() => const FlutterSecureStorage());
 
-  // Connectivity - to check internet connection
-  print('🌐 Registering Connectivity...');
-  sl.registerLazySingleton(() => Connectivity());
+  // // Connectivity - to check internet connection
+  // print('🌐 Registering Connectivity...');
+  // sl.registerLazySingleton(() => Connectivity());
+
+  // Connectivity - singleton because it's stateless
+  print('📦 [DI] Registering Connectivity...');
+  sl.registerLazySingleton<Connectivity>(() => Connectivity());
 
   //==========================================================================
   // Core - Utilities and Storage
   //==========================================================================
 
-  // Network Info - checks if device has internet
-  print('📡 Registering NetworkInfo...');
+  // // Network Info - checks if device has internet
+  // print('📡 Registering NetworkInfo...');
+  // sl.registerLazySingleton<NetworkInfo>(
+  //       () => NetworkInfoImpl(sl()),
+  // );
+
+  // NetworkInfo - singleton because checking network state is stateless
+  print('🌐 [DI] Registering NetworkInfo...');
   sl.registerLazySingleton<NetworkInfo>(
-        () => NetworkInfoImpl(sl()),
+        () => NetworkInfoImpl(sl<Connectivity>()),
   );
 
   // Token Storage - manages JWT tokens securely

@@ -115,7 +115,6 @@ class AuthRepositoryImpl implements AuthRepository {
   //   }
   // }
 
-  // lib/features/authentication/data/repositories/auth_repository_impl.dart
 
   @override
   Future<Either<Failure, User>> registerUser({
@@ -123,19 +122,28 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String phone,
   }) async {
-
-    // Use thorough internet check for critical operations
-    print('🔍 Verifying internet access for registration...');
-    final hasInternet = await networkInfo.hasInternetAccess;
-
-    if (!hasInternet) {
-      print('❌ No internet access');
-      return const Left(NetworkFailure('No internet connection. Please check your connection and try again.'));
-    }
-
-    print('✅ Internet access confirmed, proceeding with registration...');
-
     try {
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      print('🔄 [Repository] Starting user registration');
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      // ✅ CRITICAL: Check internet access before making API call
+      print('🔍 [Repository] Verifying internet access...');
+
+      // Use thorough check for critical operations
+      final hasInternet = await networkInfo.hasInternetAccess;
+
+      if (!hasInternet) {
+        print('❌ [Repository] No internet access - aborting registration');
+        return const Left(NetworkFailure(
+          'No internet connection. Please check your connection and try again.',
+        ));
+      }
+
+      print('✅ [Repository] Internet access confirmed');
+      print('📤 [Repository] Sending registration request...');
+
+      // Proceed with registration
       final request = RegisterRequestModel(
         username: username,
         email: email,
@@ -144,18 +152,30 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final userModel = await remoteDataSource.registerUser(request);
 
+      print('✅ [Repository] Registration successful!');
+      print('👤 [Repository] User ID: ${userModel.id}');
+
+      // Cache user locally
       await localDataSource.cacheUser(userModel);
+      print('💾 [Repository] User cached locally');
 
       return Right(userModel.toEntity());
 
     } on ServerException catch (e) {
+      print('❌ [Repository] Server error: ${e.message}');
       return Left(ServerFailure(e.message, statusCode: e.statusCode));
+
     } on NetworkException catch (e) {
+      print('❌ [Repository] Network error: ${e.message}');
       return Left(NetworkFailure(e.message));
-    } catch (e) {
+
+    } catch (e, stackTrace) {
+      print('❌ [Repository] Unexpected error: $e');
+      print('Stack trace: $stackTrace');
       return Left(ServerFailure('Unexpected error during registration'));
     }
   }
+
 
   //==========================================================================
   // REQUEST OTP
