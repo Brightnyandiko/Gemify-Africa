@@ -3,7 +3,7 @@ class ApiEndpoints {
   ApiEndpoints._();
 
   // Base URL
-  static const String baseUrl = 'http://127.0.0.1:5555/gems';
+  static const String baseUrl = 'http://34.35.110.190/gems';
 
   // Auth Endpoints
   static const String userRegistration = '/users';

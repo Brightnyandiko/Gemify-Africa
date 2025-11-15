@@ -6,14 +6,11 @@ import '../../../../core/errors/failures.dart';
 import '../entities/user.dart';
 import '../repositories/auth_repository.dart';
 
-/// Use Case: Get User By ID
-///
-/// Business action: Fetch a specific user's information
-/// Useful for viewing profiles, admin functions, etc.
 class GetUserById {
   final AuthRepository repository;
 
-  GetUserById(this.repository);
+  // ✅ FIXED: Use named parameter
+  const GetUserById({required this.repository});
 
   Future<Either<Failure, User>> call(GetUserByIdParams params) async {
     return await repository.getUserById(params.userId);

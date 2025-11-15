@@ -1,4 +1,5 @@
 // lib/core/storage/user_storage.dart
+
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/authentication/domain/entities/user.dart';
@@ -9,7 +10,11 @@ class UserStorage {
   static const String _userKey = 'current_user';
   static const String _onboardingKey = 'onboarding_completed';
 
-  UserStorage(this._prefs);
+  // ✅ OPTION 1: Positional parameter (simpler)
+  // UserStorage(this._prefs, {required SharedPreferences prefs});
+
+  // ✅ OPTION 2: Named parameter (more explicit)
+  UserStorage({required SharedPreferences prefs}) : _prefs = prefs;
 
   Future<void> saveUser(User user) async {
     final userJson = json.encode(user.toJson());
@@ -36,7 +41,6 @@ class UserStorage {
     return _prefs.containsKey(_userKey);
   }
 
-  // Onboarding
   Future<void> setOnboardingCompleted(bool completed) async {
     await _prefs.setBool(_onboardingKey, completed);
   }
