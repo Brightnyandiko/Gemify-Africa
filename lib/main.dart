@@ -2,31 +2,35 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'core/constants/app_colors.dart';
+// import 'core/di/injection_container.dart' as di;
+import 'features/authentication/domain/entities/user.dart';
+import 'features/authentication/presentation/bloc/auth_bloc.dart';
+import 'features/authentication/presentation/bloc/auth_event.dart';
+import 'features/authentication/presentation/bloc/auth_state.dart';
+import 'features/authentication/presentation/pages/register_page.dart';
 import 'features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'features/onboarding/presentation/pages/onboarding_screen.dart';
-import 'core/constants/app_colors.dart';
-
-// ✅ CRITICAL: Import with 'as di' prefix
 import 'injection_container.dart' as di;
 
+/// Main entry point
 void main() async {
-  // Ensure Flutter is initialized
+  // Required before using any async operations
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize dependencies
-  print('🚀 Starting app initialization...');
+  print('🚀 Starting Grand Hotel App...');
 
-  try {
-    await di.initializeDependencies();
-    print('✅ App initialization complete');
-  } catch (e) {
-    print('❌ Failed to initialize dependencies: $e');
-    // In production, you might want to show an error screen
-  }
+  // Initialize dependency injection
+  await di.initializeDependencies();
+
+  print('✅ Dependencies initialized, launching app...');
 
   runApp(const MyApp());
 }
 
+/// Root widget
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
@@ -34,88 +38,193 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        // ✅ OnboardingBloc takes NO parameters
+        // Onboarding BLoC
         BlocProvider(
-          create: (context) => di.sl<OnboardingBloc>(),
+          create: (context) => OnboardingBloc(
+            totalPages: 3,
+            sharedPreferences: di.sl(),
+          ),
         ),
 
-        // When you create AuthBloc later, register it here:
-        // BlocProvider(create: (context) => di.sl<AuthBloc>()),
+        // Auth BLoC
+        BlocProvider(
+          create: (context) => di.sl<AuthBloc>()
+            ..add(const CheckAuthStatusEvent()),
+        ),
       ],
+
       child: MaterialApp(
         title: 'Grand Hotel',
         debugShowCheckedModeBanner: false,
+
         theme: ThemeData(
           primaryColor: AppColors.primary600,
           fontFamily: 'Inter',
           scaffoldBackgroundColor: Colors.white,
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppColors.primary600,
+            brightness: Brightness.light,
+          ),
         ),
-        initialRoute: '/onboarding',
+
+        home: const AppStartupScreen(),
+
         routes: {
           '/onboarding': (context) => const OnboardingScreen(),
-          // Add authentication routes when ready:
-          // '/register': (context) => const RegisterScreen(),
-          // '/otp': (context) => const OTPScreen(),
-          // '/home': (context) => const HomeScreen(),
+          '/register': (context) => const RegisterPage(),
         },
       ),
     );
   }
 }
-//```
-//
-//---
-//
-//## Step 5: Verify File Structure
-//
-//Ensure your files are in the correct locations:
-//```
-//lib/
-//├── injection_container.dart          ← Must be here (root of lib/)
-//├── main.dart                         ← Must be here
-//├── core/
-//│   ├── constants/
-//│   │   ├── api_endpoints.dart
-//│   │   ├── app_colors.dart
-//│   │   └── app_strings.dart
-//│   ├── network/
-//│   │   ├── dio_client.dart
-//│   │   └── network_info.dart
-//│   ├── storage/
-//│   │   ├── token_storage.dart
-//│   │   └── user_storage.dart
-//│   └── errors/
-//│       ├── exceptions.dart
-//│       ├── failures.dart
-//│       └── error_handler.dart
-//└── features/
-//├── authentication/
-//│   ├── data/
-//│   │   ├── datasources/
-//│   │   │   ├── auth_local_datasource.dart
-//│   │   │   └── auth_remote_datasource.dart
-//│   │   ├── models/
-//│   │   │   ├── user_model.dart
-//│   │   │   ├── auth_response_model.dart
-//│   │   │   ├── register_request_model.dart
-//│   │   │   ├── otp_request_model.dart
-//│   │   │   └── otp_verify_model.dart
-//│   │   └── repositories/
-//│   │       └── auth_repository_impl.dart
-//│   ├── domain/
-//│   │   ├── entities/
-//│   │   │   ├── user.dart
-//│   │   │   └── auth_response.dart
-//│   │   ├── repositories/
-//│   │   │   └── auth_repository.dart
-//│   │   └── usecases/
-//│   │       ├── register_user.dart
-//│   │       ├── request_otp.dart
-//│   │       ├── verify_otp.dart
-//│   │       ├── get_current_user.dart
-//│   │       ├── get_user_by_id.dart
-//│   │       └── logout.dart
-//│   └── presentation/
-//│       └── (screens, blocs, widgets - to be created)
-//└── onboarding/
-//└── (your existing onboarding code)
+
+/// App Startup Screen
+///
+/// Decides which screen to show based on:
+/// 1. Onboarding completion status
+/// 2. Authentication status
+class AppStartupScreen extends StatelessWidget {
+  const AppStartupScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        print('📱 Current Auth State: $authState');
+
+        // Show splash screen while checking authentication
+        if (authState is AuthLoading || authState is AuthInitial) {
+          return const SplashScreen();
+        }
+
+        // Check if onboarding is completed
+        final onboardingCompleted = _isOnboardingCompleted();
+        print('📱 Onboarding completed: $onboardingCompleted');
+
+        // Decision tree
+        if (!onboardingCompleted) {
+          // Onboarding not done - show onboarding
+          print('➡️  Navigating to: Onboarding');
+          return const OnboardingScreen();
+        }
+        else if (authState is Authenticated) {
+          // User is logged in - show main app
+          print('➡️  Navigating to: Main App (${authState.user.username})');
+          return MainAppPlaceholder(user: authState.user);
+        }
+        else {
+          // User not logged in - show registration
+          print('➡️  Navigating to: Registration');
+          return const RegisterPage();
+        }
+      },
+    );
+  }
+
+  /// Check if onboarding is completed
+  bool _isOnboardingCompleted() {
+    try {
+      final prefs = di.sl<SharedPreferences>();
+      return prefs.getBool('onboarding_completed') ?? false;
+    } catch (e) {
+      print('⚠️  Error checking onboarding: $e');
+      return false;
+    }
+  }
+}
+
+/// Splash Screen
+class SplashScreen extends StatelessWidget {
+  const SplashScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.primary600,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.hotel,
+              size: 100,
+              color: Colors.white,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Grand Hotel',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontFamily: 'Inter',
+              ),
+            ),
+            const SizedBox(height: 48),
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Main App Placeholder
+class MainAppPlaceholder extends StatelessWidget {
+  final User user;
+
+  const MainAppPlaceholder({
+    Key? key,
+    required this.user,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Grand Hotel'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              context.read<AuthBloc>().add(const LogoutEvent());
+            },
+          ),
+        ],
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.check_circle,
+              size: 80,
+              color: Colors.green,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Welcome to Grand Hotel!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Logged in as: ${user.username}',
+              style: const TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Email: ${user.email}',
+              style: const TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
