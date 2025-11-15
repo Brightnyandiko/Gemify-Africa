@@ -92,7 +92,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
         // Automatically request OTP after successful registration
         print('📧 Auto-requesting OTP...');
-        await Future.delayed(const Duration(milliseconds: 500));
+        await Future.delayed(const Duration(milliseconds: 5000));
         add(RequestOTPEvent(email: event.email));
       },
     );

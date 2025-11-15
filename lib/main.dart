@@ -90,6 +90,15 @@ class AppStartupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
+      // ⭐ KEY FIX: Only rebuild for auth status changes
+      buildWhen: (previous, current) {
+        // Only rebuild when switching between authenticated/unauthenticated
+        // Don't rebuild for intermediate states like RegistrationSuccess, OTPSent
+        return (previous is! Authenticated && current is Authenticated) ||
+            (previous is Authenticated && current is! Authenticated) ||
+            current is AuthInitial ||
+            (previous is AuthLoading && current is! AuthLoading);
+      },
       builder: (context, authState) {
         print('📱 Current Auth State: $authState');
 

@@ -97,6 +97,11 @@ class _RegisterPageState extends State<RegisterPage> {
             // Registration successful - show success message
             print('✅ Registration successful, waiting for OTP...');
             context.showSnackBar('Registration successful! Sending verification code...');
+
+            // 🔥 FIX: Manually request OTP after registration
+            context.read<AuthBloc>().add(
+              RequestOTPEvent(email: _emailController.text.trim()),
+            );
           }
           else if (state is OTPSent) {
             // OTP sent - navigate to OTP verification screen
