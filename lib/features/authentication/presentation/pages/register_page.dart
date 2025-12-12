@@ -215,6 +215,15 @@ class _RegisterPageState extends State<RegisterPage> {
               // Terms and conditions text (from Figma)
               _buildTermsText(),
 
+              // Inside _buildContent(), after _buildTermsText()
+
+              const SizedBox(height: 16),
+
+              // ✅ ADD: "Already have an account? Sign In"
+              _buildSignInLink(),
+
+              const SizedBox(height: 40),
+
               const SizedBox(height: 40),
             ],
           ),
@@ -273,6 +282,36 @@ class _RegisterPageState extends State<RegisterPage> {
         ],
       ),
       textAlign: TextAlign.center,
+    );
+  }
+
+  /// "Already have an account? Sign In" link
+  Widget _buildSignInLink() {
+    return Center(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Already have an account? ',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.gray600,
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              // Go back to login screen
+              context.pop();
+            },
+            child: Text(
+              'Sign In',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.primary600,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

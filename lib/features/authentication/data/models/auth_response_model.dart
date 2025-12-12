@@ -3,62 +3,85 @@
 import '../../domain/entities/auth_response.dart';
 import 'user_model.dart';
 
-/// Auth Response Model - What we get back after successful OTP verification
-///
-/// Your Flask API returns something like:
-/// {
-///   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-///   "user": {
-///     "id": 1,
-///     "username": "john_doe",
-///     "email": "john@email.com",
-///     "phone": "254712345678"
-///   },
-///   "message": "OTP verified successfully"
-/// }
-/// Auth Response Model - CORRECTED VERSION
 class AuthResponseModel extends AuthResponse {
-
-  // Override the user property to use UserModel specifically
   @override
   final UserModel user;
 
   const AuthResponseModel({
-    required this.user,              // Now explicitly UserModel
+    required this.user,
     required super.accessToken,
     super.refreshToken,
     super.message,
-  }) : super(user: user);            // Pass to parent constructor
+  }) : super(user: user);
 
-  /// Create from JSON
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
-    return AuthResponseModel(
-      // This creates a UserModel
-      user: UserModel.fromJson(json['user'] as Map<String, dynamic>),
+    print('🔍 Parsing AuthResponseModel from JSON...');
+    print('JSON Keys: ${json.keys.toList()}');
 
-      accessToken: json['access_token'] as String? ??
-          json['token'] as String? ??
-          '',
+    try {
+      // Extract access token
+      String? accessToken = json['access_token'] as String? ??
+          json['token'] as String?;
 
-      refreshToken: json['refresh_token'] as String?,
-      message: json['message'] as String?,
-    );
+      if (accessToken == null || accessToken.isEmpty) {
+        throw Exception('Missing access_token in API response');
+      }
+
+      print('✅ Found access token');
+
+      // Handle both nested and flat user data formats
+      UserModel user;
+
+      if (json.containsKey('user') && json['user'] != null) {
+        // Nested format: { "user": { "id": 1, ... } }
+        print('📦 Found nested user object');
+        final userData = json['user'] as Map<String, dynamic>;
+        user = UserModel.fromJson(userData);
+      }
+      else if (json.containsKey('id') && json.containsKey('username')) {
+        // Flat format: { "id": 1, "username": "...", ... }
+        print('📦 Found flat user data at top level');
+        user = UserModel.fromJson({
+          'id': json['id'],
+          'username': json['username'],
+          'email': json['email'],
+          'phone': json['phone'],
+          'created_at': json['created_at'],
+          'updated_at': json['updated_at'],
+        });
+      }
+      else {
+        throw Exception('No user data found in response');
+      }
+
+      print('✅ Successfully created UserModel: ${user.username}');
+
+      return AuthResponseModel(
+        user: user,
+        accessToken: accessToken,
+        refreshToken: json['refresh_token'] as String?,
+        message: json['message'] as String?,
+      );
+
+    } catch (e, stackTrace) {
+      print('❌ ERROR parsing AuthResponseModel: $e');
+      print('Stack trace: $stackTrace');
+      print('JSON received: $json');
+      rethrow;
+    }
   }
 
-  /// Convert to JSON
   Map<String, dynamic> toJson() {
     return {
-      'user': user.toJson(),  // user is UserModel, so this works
+      'user': user.toJson(),
       'access_token': accessToken,
       'refresh_token': refreshToken,
       'message': message,
     };
   }
 
-  /// Convert from entity to model
   factory AuthResponseModel.fromEntity(AuthResponse authResponse) {
     return AuthResponseModel(
-      // Convert User entity to UserModel
       user: authResponse.user is UserModel
           ? authResponse.user as UserModel
           : UserModel.fromEntity(authResponse.user),
@@ -68,11 +91,10 @@ class AuthResponseModel extends AuthResponse {
     );
   }
 
-  /// Convert to entity
   @override
   AuthResponse toEntity() {
     return AuthResponse(
-      user: user.toEntity(),  // Convert UserModel to User entity
+      user: user.toEntity(),
       accessToken: accessToken,
       refreshToken: refreshToken,
       message: message,

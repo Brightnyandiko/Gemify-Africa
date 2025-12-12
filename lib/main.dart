@@ -11,6 +11,7 @@ import 'features/authentication/presentation/bloc/auth_bloc.dart';
 import 'features/authentication/presentation/bloc/auth_event.dart';
 import 'features/authentication/presentation/bloc/auth_state.dart';
 import 'features/authentication/presentation/pages/register_page.dart';
+import 'features/authentication/presentation/pages/login_page.dart'; // ✅ NEW IMPORT
 import 'features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'features/onboarding/presentation/pages/onboarding_screen.dart';
 import 'injection_container.dart' as di;
@@ -73,6 +74,7 @@ class MyApp extends StatelessWidget {
         routes: {
           '/onboarding': (context) => const OnboardingScreen(),
           '/register': (context) => const RegisterPage(),
+          '/login': (context) => const LoginPage(),      // ✅ NEW ROUTE
         },
       ),
     );
@@ -81,9 +83,10 @@ class MyApp extends StatelessWidget {
 
 /// App Startup Screen
 ///
-/// Decides which screen to show based on:
-/// 1. Onboarding completion status
-/// 2. Authentication status
+/// Decision tree:
+/// 1. Onboarding not done → Show Onboarding
+/// 2. User authenticated → Show Main App
+/// 3. User not authenticated → Show Login ✅ CHANGED FROM REGISTER
 class AppStartupScreen extends StatelessWidget {
   const AppStartupScreen({Key? key}) : super(key: key);
 
@@ -123,9 +126,9 @@ class AppStartupScreen extends StatelessWidget {
           return MainAppPlaceholder(user: authState.user);
         }
         else {
-          // User not logged in - show registration
-          print('➡️  Navigating to: Registration');
-          return const RegisterPage();
+          // ✅ CHANGED: Show Login instead of Register
+          print('➡️  Navigating to: Login');
+          return const LoginPage(); // ✅ WAS: RegisterPage()
         }
       },
     );
