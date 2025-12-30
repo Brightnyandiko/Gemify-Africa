@@ -212,7 +212,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 20),
 
               // Back button
-              _buildBackButton(),
+              // _buildBackButton(),
 
               const SizedBox(height: 40),
 
@@ -250,17 +250,17 @@ class _LoginPageState extends State<LoginPage> {
               // "Don't have an account? Sign Up"
               _buildSignUpLink(),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 10),
 
               // "Or Sign In with"
-              _buildDividerText(),
+              // _buildDividerText(),
 
-              const SizedBox(height: 24),
+              // const SizedBox(height: 24),
 
               // Social login buttons
-              _buildSocialButtons(),
+              // _buildSocialButtons(),
 
-              const SizedBox(height: 32),
+              // const SizedBox(height: 32),
 
               // Terms and conditions
               _buildTermsText(),
@@ -301,7 +301,7 @@ class _LoginPageState extends State<LoginPage> {
   /// Subtitle
   Widget _buildSubtitle() {
     return Text(
-      'Lorem ipsum dolor sit amet, consectetur',
+      'Access the services of the app by signing in.',
       style: AppTextStyles.bodyMedium.copyWith(
         color: AppColors.gray500,
       ),

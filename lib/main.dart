@@ -74,7 +74,7 @@ class MyApp extends StatelessWidget {
         routes: {
           '/onboarding': (context) => const OnboardingScreen(),
           '/register': (context) => const RegisterPage(),
-          '/login': (context) => const LoginPage(),      // ✅ NEW ROUTE
+          '/login': (context) => const LoginPage(),
         },
       ),
     );
